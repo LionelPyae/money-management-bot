@@ -209,8 +209,53 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     text = update.message.text.strip()
     logger.info(f"Received message from user {user_id}: {text}")
-    await update.message.reply_text("Test reply: I received your message!")
-    return
+    
+    # Parse transaction from message
+    # Format: +100 salary or -50 food or +2000 bonus work bonus
+    pattern = r'^([+-])(\d+(?:\.\d{1,2})?)\s+(\w+)(?:\s+(.+))?$'
+    match = re.match(pattern, text)
+    
+    if not match:
+        await update.message.reply_text(
+            "❌ Invalid format. Use:\n"
+            "• +100 salary (income)\n"
+            "• -50 food (expense)\n"
+            "• +2000 bonus work bonus (with description)"
+        )
+        return
+    
+    sign, amount_str, category, description = match.groups()
+    amount = float(amount_str)
+    transaction_type = "income" if sign == "+" else "expense"
+    
+    # Create transaction
+    db = next(get_db())
+    try:
+        transaction_data = schemas.TransactionCreate(
+            user_id=user_id,
+            amount=amount,
+            transaction_type=transaction_type,
+            category=category,
+            description=description
+        )
+        
+        transaction = crud.create_transaction(db, transaction_data)
+        
+        emoji = "💰" if transaction_type == "income" else "💸"
+        message = f"{emoji} Transaction added successfully!\n\n"
+        message += f"Amount: ${amount:.2f}\n"
+        message += f"Type: {transaction_type.title()}\n"
+        message += f"Category: {category}\n"
+        if description:
+            message += f"Description: {description}\n"
+        message += f"ID: {transaction.id}"
+        
+        await update.message.reply_text(message)
+    except Exception as e:
+        logger.error(f"Error creating transaction: {e}")
+        await update.message.reply_text("❌ Error creating transaction. Please try again.")
+    finally:
+        db.close()
 
 # Webhook endpoint for Telegram
 @app.post("/telegram")
