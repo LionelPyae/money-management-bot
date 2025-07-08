@@ -7,6 +7,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import asyncio
 import re
 from typing import Dict, Any
+from types import SimpleNamespace
 
 from .database import get_db, create_tables
 from . import crud, schemas
@@ -258,33 +259,39 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Webhook endpoint for Telegram
 @app.post("/telegram")
 async def telegram_webhook(request: Request):
-    """Handle Telegram webhook updates"""
     try:
-        # Parse the update
         update_data = await request.json()
         update = Update.de_json(update_data, bot)
-        
-        # Handle the update
+
+        # Dummy context with args
+        class DummyContext:
+            def __init__(self, args=None):
+                self.args = args or []
+
         if update.message:
             if update.message.text:
-                if update.message.text.startswith('/'):
-                    # Handle commands
-                    if update.message.text.startswith('/start'):
-                        await start_command(update, None)
-                    elif update.message.text.startswith('/help'):
-                        await help_command(update, None)
-                    elif update.message.text.startswith('/summary'):
-                        await summary_command(update, None)
-                    elif update.message.text.startswith('/transactions'):
-                        await transactions_command(update, None)
-                    elif update.message.text.startswith('/delete'):
-                        await delete_command(update, None)
+                text = update.message.text
+                if text.startswith('/'):
+                    split_text = text.split()
+                    command = split_text[0]
+                    args = split_text[1:]
+                    context = DummyContext(args)
+                    if command == '/start':
+                        await start_command(update, context)
+                    elif command == '/help':
+                        await help_command(update, context)
+                    elif command == '/summary':
+                        await summary_command(update, context)
+                    elif command == '/transactions':
+                        await transactions_command(update, context)
+                    elif command == '/delete':
+                        await delete_command(update, context)
                     else:
                         await update.message.reply_text("Unknown command. Use /help for available commands.")
                 else:
-                    # Handle regular messages
-                    await handle_message(update, None)
-        
+                    context = DummyContext()
+                    await handle_message(update, context)
+
         return JSONResponse(content={"status": "ok"})
     except Exception as e:
         logger.error(f"Error handling webhook: {e}")
