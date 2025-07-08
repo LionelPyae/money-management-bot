@@ -37,12 +37,18 @@ async def send_admin_notification(message: str):
 # Create tables on startup
 @app.on_event("startup")
 async def startup_event():
-    create_tables()
-    logger.info("Database tables created")
-    
-    # Send startup notification to admin
-    startup_message = "🚀 Money Management Bot is now online and ready to track your finances!"
-    await send_admin_notification(startup_message)
+    try:
+        logger.info("Starting up Money Management Bot...")
+        logger.info(f"TELEGRAM_BOT_TOKEN: {Config.TELEGRAM_BOT_TOKEN[:8]}... (hidden) ")
+        logger.info(f"DATABASE_URL: {Config.DATABASE_URL}")
+        create_tables()
+        logger.info("Database tables created")
+        # Send startup notification to admin
+        startup_message = "🚀 Money Management Bot is now online and ready to track your finances!"
+        await send_admin_notification(startup_message)
+    except Exception as e:
+        logger.error(f"Startup failed: {e}")
+        raise
 
 # Command handlers
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
