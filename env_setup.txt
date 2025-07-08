@@ -1,0 +1,15 @@
+# Copy this content to a file named .env in your project root
+
+# Telegram Bot Configuration
+TELEGRAM_BOT_TOKEN=8114777947:AAF49VRSOGr6xT_EhQ3LrmAf1m8utdak2Qs
+TELEGRAM_CHAT_ID=-4642426494
+
+# Database Configuration
+DATABASE_URL=sqlite:///./money_bot.db
+
+# Server Configuration
+HOST=0.0.0.0
+PORT=8000
+
+# Webhook Configuration (for production)
+WEBHOOK_URL=https://your-app-name.onrender.com/telegram 

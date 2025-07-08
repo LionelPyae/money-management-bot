@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: money-management-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: DATABASE_URL
+        value: sqlite:///./money_bot.db
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 8000 
